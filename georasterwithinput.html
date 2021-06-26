@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+  </head>
+  <body>
+    <div id="map" style="height:90vh;width:90vw"></div>
+    <div>
+      <h1>Load a GeoTIFF File</h1>
+      <input type="file" id="geotiff-file">
+    </div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/georaster"></script>
+    <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+    <script>
+      // initalize leaflet map
+      var map = L.map('map').setView([0, 0], 5);
+
+      // add OpenStreetMap basemap
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
+        maxZoom: 16
+      }).addTo(map)
+
+
+      document.getElementById("geotiff-file").addEventListener("change", function(event) {
+        var file = event.target.files[0];
+
+        var reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        reader.onloadend = function() {
+          var arrayBuffer = reader.result;
+          parseGeoraster(arrayBuffer).then(georaster => {
+
+            console.log("georaster:", georaster);
+            /*
+                GeoRasterLayer is an extension of GridLayer,
+                which means can use GridLayer options like opacity.
+                Just make sure to include the georaster option!
+                http://leafletjs.com/reference-1.2.0.html#gridlayer
+            */
+            var layer = new GeoRasterLayer({
+                georaster: georaster,
+                opacity: 0.7,
+                resolution: 256
+            });
+            console.log("layer:", layer);
+            layer.addTo(map);
+
+            map.fitBounds(layer.getBounds());
+          });
+        };
+      });
+    </script>
+  </body>
+</html>
